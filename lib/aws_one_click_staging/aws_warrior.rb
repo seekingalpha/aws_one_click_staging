@@ -4,6 +4,10 @@ require 'aws-sdk'
 module AwsOneClickStaging
 
   class AwsWarrior
+    CREDENTIAL_KEYS = ["aws_region", "aws_access_key_id", "aws_secret_access_key"]
+
+    class BadConfiguration < RuntimeError
+    end
 
     def initialize file: nil, config: nil
       if config
@@ -58,8 +62,23 @@ module AwsOneClickStaging
 
     def setup_aws_credentials_and_configs
       aws_region = @config["aws_region"]
-      @access_key_id = @config["aws_access_key_id"]
-      @secret_access_key = @config["aws_secret_access_key"]
+
+      missing = CREDENTIAL_KEYS.select do |key|
+        !@config[key]
+      end
+      if missing.none?
+        @access_key_id = @config["aws_access_key_id"]
+        @secret_access_key = @config["aws_secret_access_key"]
+        Aws.config.update(credentials: Aws::Credentials.new(@access_key_id, @secret_access_key))
+      end
+      if missing.any? && `ec2metadata 2>/dev/null`.empty?
+        raise BadConfiguration, "The following required keys are missing: #{missing.join(', ')}"
+      end
+      if !@config["aws_region"] && !`ec2metadata 2>/dev/null`.empty?
+        aws_region = `ec2metadata --availability-zone`.chomp[0..-2]
+      end
+      Aws.config.update(region: aws_region)
+
       @master_user_password = @config["aws_master_user_password"]
       @aws_production_bucket = @config["aws_production_bucket"]
       @aws_staging_bucket = @config["aws_staging_bucket"]
@@ -68,8 +87,6 @@ module AwsOneClickStaging
       @db_instance_id_staging = @config["db_instance_id_staging"]
       @db_snapshot_id = @config["db_snapshot_id"]
 
-      Aws.config.update({ region: aws_region,
-        credentials: Aws::Credentials.new(@access_key_id, @secret_access_key) })
 
       @c = Aws::RDS::Client.new
     end

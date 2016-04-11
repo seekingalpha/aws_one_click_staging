@@ -16,13 +16,17 @@ describe AwsOneClickStaging do
     expect{AwsOneClickStaging::AwsWarrior.new(file: "#{@mocked_home}/aws_one_click_staging.yml")}.to raise_error(AwsOneClickStaging::ConfigFile::NewFileError)
 
     expect(File.exists?("#{ENV['HOME']}/aws_one_click_staging.yml")).to be true
+
+    expect{AwsOneClickStaging::AwsWarrior.new(file: "#{@mocked_home}/aws_one_click_staging.yml")}.to raise_error(AwsOneClickStaging::AwsWarrior::BadConfiguration)
   end
 
 
   describe 'AwsWarrior' do
 
     before :each do
-      @aws_warrior = AwsOneClickStaging::AwsWarrior.new
+      config = AwsOneClickStaging::ConfigFile.load
+      config.each_key {|key| config[key] = 'nonsense' if !config[key]}
+      @aws_warrior = AwsOneClickStaging::AwsWarrior.new(config: config)
     end
 
     it 'can clone an RDS database' do
