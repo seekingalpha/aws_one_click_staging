@@ -13,9 +13,9 @@ describe AwsOneClickStaging do
   end
 
   it 'can check config files' do
-    a = AwsOneClickStaging.check
+    expect{AwsOneClickStaging::AwsWarrior.new(file: "#{@mocked_home}/aws_one_click_staging.yml")}.to raise_error(AwsOneClickStaging::ConfigFile::NewFileError)
 
-    expect(File.exists?("#{ENV['HOME']}/.config/aws_one_click_staging.yml")).to be true
+    expect(File.exists?("#{ENV['HOME']}/aws_one_click_staging.yml")).to be true
   end
 
 

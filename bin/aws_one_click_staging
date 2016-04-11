@@ -6,29 +6,29 @@ require "aws_one_click_staging"
 class AwsOneClickStagingRunner < Thor
   default_task :help
 
-  desc "check", "Checks your ~/.config/aws_one_click_staging.yml for validity"
-  def check
-    AwsOneClickStaging.check
+  desc "check", "Checks your config for validity (default ~/.config/aws_one_click_staging.yml)"
+  def check(file=nil)
+    AwsOneClickStaging.check(file)
   end
 
-  desc "stage", "Makes a copy of the RDS database and the staging server's S3 bucket.  This takes a while.  Run on an Amazon shell!"
-  def stage
-    AwsOneClickStaging.stage
+  desc "stage FILE", "Makes a copy of the RDS database and the staging server's S3 bucket.  This takes a while.  Run on an Amazon shell!"
+  def stage(file=nil)
+    AwsOneClickStaging.stage(file)
   end
 
-  desc "just_rds", "Just clones the RDS part of things."
-  def just_rds
-    AwsOneClickStaging.just_rds
+  desc "just_rds FILE", "Just clones the RDS part of things."
+  def just_rds(file=nil)
+    AwsOneClickStaging.just_rds(file)
   end
 
   desc "just_s3", "Just clones the s3 part of things."
-  def just_s3
-    AwsOneClickStaging.just_s3
+  def just_s3(file=nil)
+    AwsOneClickStaging.just_s3(file)
   end
 
   desc "just_ec2", "Just clones the ec2 part of things."
-  def just_ec2
-    AwsOneClickStaging.just_ec2
+  def just_ec2(file=nil)
+    AwsOneClickStaging.just_ec2(file)
   end
 
   desc "version", "Prints gem's version"

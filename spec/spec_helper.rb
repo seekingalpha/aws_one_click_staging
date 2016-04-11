@@ -16,5 +16,7 @@ def reset_test_env
   working_amazon_credentials_file = "#{SOURCE_ROOT}/config/aws_actual_fffing_secrets.yml"
   if File.exists?(working_amazon_credentials_file)
     FileUtils.cp(working_amazon_credentials_file, "#{@mocked_home}/.config/aws_one_click_staging.yml")
+  else
+    AwsOneClickStaging::ConfigFile.create!
   end
 end

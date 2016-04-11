@@ -6,8 +6,8 @@ SOURCE_ROOT = File.expand_path("#{File.dirname(__FILE__)}/..")
 
 module AwsOneClickStaging
 
-  def self.stage
-    warrior = AwsWarrior.new
+  def self.stage(file=nil)
+    warrior = AwsWarrior.new(file: file)
     return if warrior.nil?
     puts "cloning database from amazon... this takes a while..."
     warrior.clone_rds
@@ -19,15 +19,17 @@ module AwsOneClickStaging
     puts "\nOperations completed successfully!"
   end
 
-  def self.check
-    warrior = AwsWarrior.new # this makes a config file if needed
+  def self.check(file=nil)
+    warrior = AwsWarrior.new(file: file) # this makes a config file if needed
     puts "This command *would* test that you have the needed permissions on the "
     puts "buckets and rds instances you named in your config file... "
     puts "but alas, you're reading the outputs of a stubbed method..."
+  rescue => e
+    puts e
   end
 
-  def self.just_s3
-    warrior = AwsWarrior.new
+  def self.just_s3(file=nil)
+    warrior = AwsWarrior.new(file: file)
     return if warrior.nil?
 
     puts "cloning s3 bucket from amazon... this takes forever..."
@@ -36,8 +38,8 @@ module AwsOneClickStaging
 
   end
 
-  def self.just_rds
-    warrior = AwsWarrior.new
+  def self.just_rds(file=nil)
+    warrior = AwsWarrior.new(file: file)
     return if warrior.nil?
 
     puts "cloning database from amazon... this takes a while..."
@@ -48,8 +50,8 @@ module AwsOneClickStaging
     puts "\nOperations completed successfully!"
   end
 
-  def self.just_ec2
-    warrior = AwsWarrior.new
+  def self.just_ec2(file=nil)
+    warrior = AwsWarrior.new(file: file)
     puts "this is a stub because we only did this one time and don't feel need to repeat."
   end
 

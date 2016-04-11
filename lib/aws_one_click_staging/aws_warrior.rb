@@ -1,17 +1,16 @@
-require 'fileutils'
+require "aws_one_click_staging/config_file"
 require 'aws-sdk'
-require 'yaml'
 
 module AwsOneClickStaging
 
   class AwsWarrior
 
-    def initialize
-      # read config file
-      @config_dir = "#{ENV['HOME']}/.config"
-      @config_file = File.expand_path("#{@config_dir}/aws_one_click_staging.yml")
-      return nil if create_config_file_if_needed!
-      @config = YAML.load(read_config_file)
+    def initialize file: nil, config: nil
+      if config
+        @config = config
+      else
+        @config = ConfigFile.load(file)
+      end
       setup_aws_credentials_and_configs
     end
 
@@ -146,30 +145,6 @@ module AwsOneClickStaging
     rescue Aws::RDS::Errors::DBInstanceNotFound => e
       true
     end
-
-
-
-
-    def read_config_file
-      config = File.read(@config_file)
-    end
-
-    def create_config_file_if_needed!
-      return false if File.exists?(@config_file)
-      msg = ""
-      msg += "Config file not found, creating...\n\n"
-
-      # copy example config file to config file path
-      FileUtils.mkdir_p @config_dir
-      FileUtils.cp("#{SOURCE_ROOT}/config/aws_one_click_staging.yml", @config_file)
-
-      msg += "An empty config file was created for you in #{@config_file}\n"
-      msg += "Please populate it with the correct information and run this \n"
-      msg += "command again.  \n"
-
-      true
-    end
-
   end
 
 end
