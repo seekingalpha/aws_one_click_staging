@@ -95,7 +95,7 @@ module AwsOneClickStaging
 
     def create_new_snapshot_for_staging!
       puts "creating new snapshot... this takes like 170 seconds..."
-      response = @c.create_db_snapshot({db_instance_identifier: @db_instance_id_production,
+      @c.create_db_snapshot({db_instance_identifier: @db_instance_id_production,
         db_snapshot_identifier: @db_snapshot_id })
 
       sleep 10 while get_fresh_db_snapshot_state.status != "available"
@@ -107,7 +107,7 @@ module AwsOneClickStaging
 
     def delete_staging_db_instance!
       puts "Deleting old staging instance... This one's a doozy =/"
-      response = @c.delete_db_instance(db_instance_identifier: @db_instance_id_staging,
+      @c.delete_db_instance(db_instance_identifier: @db_instance_id_staging,
         skip_final_snapshot: true)
 
       sleep 10 until db_instance_is_deleted?(@db_instance_id_staging)
@@ -151,7 +151,7 @@ module AwsOneClickStaging
     def db_instance_is_deleted?(db_instance_id)
       @c.describe_db_instances(db_instance_identifier: db_instance_id).db_instances.first
       false
-    rescue Aws::RDS::Errors::DBInstanceNotFound => e
+    rescue Aws::RDS::Errors::DBInstanceNotFound
       true
     end
   end
