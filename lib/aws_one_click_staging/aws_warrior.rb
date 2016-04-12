@@ -19,8 +19,6 @@ module AwsOneClickStaging
     end
 
     def clone_rds
-      setup_aws_credentials_and_configs
-
       delete_snapshot_for_staging!
       create_new_snapshot_for_staging!
 
@@ -29,16 +27,12 @@ module AwsOneClickStaging
     end
 
     def clone_s3_bucket
-      setup_aws_credentials_and_configs
-
-      from_creds = { aws_access_key_id: @access_key_id,
-        aws_secret_access_key: @secret_access_key,
+      from_settings = { credentials: Aws.config,
         bucket: @aws_production_bucket}
-      to_creds = { aws_access_key_id: @access_key_id,
-        aws_secret_access_key: @secret_access_key,
+      to_settings = { credentials: Aws.config,
         bucket: @aws_staging_bucket}
 
-      bs = BucketSyncService.new(from_creds, to_creds)
+      bs = BucketSyncService.new(from_settings, to_settings)
       bs.debug = true
 
       puts "beginning clone of S3 bucket, this can go on for tens of minutes..."
@@ -46,8 +40,6 @@ module AwsOneClickStaging
     end
 
     def get_fancy_string_of_staging_db_uri
-      setup_aws_credentials_and_configs
-
       l = 66
       msg = ""
       msg += "*" * l + "\n"
@@ -67,9 +59,9 @@ module AwsOneClickStaging
         !@config[key]
       end
       if missing.none?
-        @access_key_id = @config["aws_access_key_id"]
-        @secret_access_key = @config["aws_secret_access_key"]
-        Aws.config.update(credentials: Aws::Credentials.new(@access_key_id, @secret_access_key))
+        access_key_id = @config["aws_access_key_id"]
+        secret_access_key = @config["aws_secret_access_key"]
+        Aws.config.update(credentials: Aws::Credentials.new(access_key_id, secret_access_key))
       end
       if missing.any? && `ec2metadata 2>/dev/null`.empty?
         raise BadConfiguration, "The following required keys are missing: #{missing.join(', ')}"

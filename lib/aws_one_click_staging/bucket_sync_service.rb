@@ -1,6 +1,6 @@
 # props to bantic
 # https://gist.github.com/bantic/4080793
-require 'aws/s3' # gem name is 'aws-sdk'
+require 'aws-sdk'
 require "thwait"
 
 class BucketSyncService
@@ -12,13 +12,12 @@ class BucketSyncService
 
 
 
-  # from_credentials and to_credentials are both hashes with these keys:
-  #  * :aws_access_key_id
-  #  * :aws_secret_access_key
+  # from_settings and to_settings are both hashes with these keys:
+  #  * :credentials (same as any AWS service)
   #  * :bucket
-  def initialize(from_credentials, to_credentials)
-    @from_bucket = bucket_from_credentials(from_credentials)
-    @to_bucket   = bucket_from_credentials(to_credentials)
+  def initialize(from_settings, to_settings)
+    @from_bucket = bucket_from_credentials(from_settings)
+    @to_bucket   = bucket_from_credentials(to_settings)
   end
 
   def perform(output=STDOUT)
@@ -61,7 +60,7 @@ class BucketSyncService
   def sync(object)
     logger.debug "Syncing #{pp object}"
     acl_setting = file_is_public?(object) ? :public_read : :private
-    object.copy_to(to_bucket.objects[object.key], acl: acl_setting)
+    object.copy_to(to_bucket.object(object.key), acl: acl_setting)
   end
 
   # Crude, but ala aws I think :)
@@ -80,20 +79,19 @@ class BucketSyncService
   end
 
   def object_needs_syncing?(object)
-    to_object = to_bucket.objects[object.key]
+    to_object = to_bucket.object(object.key)
     return true if !to_object.exists? # object isn't even present in the dst bucket
 
     return to_object.etag != object.etag # does the etag on the dst object differ from src?
   end
 
 
-  def bucket_from_credentials(credentials)
-    s3 = AWS::S3.new(access_key_id:      credentials[:aws_access_key_id],
-                     secret_access_key:  credentials[:aws_secret_access_key])
+  def bucket_from_credentials(settings)
+    s3 = Aws::S3::Resource.new(settings[:credentials])
 
-    bucket = s3.buckets[ credentials[:bucket] ]
+    bucket = s3.bucket(settings[:bucket])
     if !bucket.exists?
-      bucket = s3.buckets.create( credentials[:bucket] )
+      bucket = s3.create_bucket(settings[:bucket])
     end
     bucket
   end
@@ -104,9 +102,9 @@ end
 
 =begin
 Example usage:
- from_creds = {aws_access_key_id:"XXX", aws_secret_access_key:"YYY", bucket:"first-bucket"}
- to_creds = {aws_access_key_id:"ZZZ", aws_secret_access_key:"AAA", bucket:"second-bucket"}
- syncer = BucketSyncService.new(from_creds, to_creds)
+ from_settings = {credentials: {aws_access_key_id:"XXX", aws_secret_access_key:"YYY"}, bucket:"first-bucket"}
+ to_settings = {credentials: {aws_access_key_id:"ZZZ", aws_secret_access_key:"AAA"}, bucket:"second-bucket"}
+ syncer = BucketSyncService.new(from_settings, to_settings)
  syncer.debug = true # log each object
  syncer.perform
 =end
