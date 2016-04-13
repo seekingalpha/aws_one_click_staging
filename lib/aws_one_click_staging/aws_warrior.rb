@@ -40,14 +40,7 @@ module AwsOneClickStaging
     end
 
     def get_fancy_string_of_staging_db_uri
-      l = 66
-      msg = ""
-      msg += "*" * l + "\n"
-      msg += "* "
-      msg += get_fresh_db_instance_state(@db_instance_id_staging).endpoint.address
-      msg += "  *\n"
-      msg += "*" * l
-      msg
+      get_fresh_db_instance_state(@db_instance_id_staging).endpoint.address
     end
 
     private

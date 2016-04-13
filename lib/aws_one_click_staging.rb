@@ -14,7 +14,7 @@ module AwsOneClickStaging
     puts "cloning s3 bucket from amazon... this takes forever..."
     warrior.clone_s3_bucket
 
-    puts warrior.get_fancy_string_of_staging_db_uri
+    pretty_print_staging_db_uri(warrior)
 
     puts "\nOperations completed successfully!"
   end
@@ -45,7 +45,7 @@ module AwsOneClickStaging
     puts "cloning database from amazon... this takes a while..."
     warrior.clone_rds
 
-    puts warrior.get_fancy_string_of_staging_db_uri
+    pretty_print_staging_db_uri(warrior)
 
     puts "\nOperations completed successfully!"
   end
@@ -55,4 +55,14 @@ module AwsOneClickStaging
     puts "this is a stub because we only did this one time and don't feel need to repeat."
   end
 
+  def self.pretty_print_staging_db_uri(warrior)
+    l = 66
+    msg = ""
+    msg += "*" * l + "\n"
+    msg += "* "
+    msg += warrior.get_fancy_string_of_staging_db_uri
+    msg += "  *\n"
+    msg += "*" * l
+    puts msg
+  end
 end
