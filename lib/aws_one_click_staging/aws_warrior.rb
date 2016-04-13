@@ -27,9 +27,9 @@ module AwsOneClickStaging
     end
 
     def clone_s3_bucket
-      from_settings = { credentials: Aws.config,
+      from_settings = { credentials: @production_creds,
         bucket: @aws_production_bucket}
-      to_settings = { credentials: Aws.config,
+      to_settings = { credentials: @staging_creds,
         bucket: @aws_staging_bucket}
 
       bs = BucketSyncService.new(from_settings, to_settings)
@@ -53,23 +53,16 @@ module AwsOneClickStaging
     private
 
     def setup_aws_credentials_and_configs
-      aws_region = @config["aws_region"]
-
-      missing = CREDENTIAL_KEYS.select do |key|
-        !@config[key]
+      @staging_creds = setup_aws_credentials(@config['staging'] || @config)
+      Aws.config.update @staging_creds
+      @c_staging = Aws::RDS::Client.new
+      if @config['production']
+        @production_creds = setup_aws_credentials(@config['production'])
+        @c_production = Aws::RDS::Client.new(@production_creds)
+      else
+        @production_creds = @staging_creds
+        @c_production = @c_staging
       end
-      if missing.none?
-        access_key_id = @config["aws_access_key_id"]
-        secret_access_key = @config["aws_secret_access_key"]
-        Aws.config.update(credentials: Aws::Credentials.new(access_key_id, secret_access_key))
-      end
-      if missing.any? && `ec2metadata 2>/dev/null`.empty?
-        raise BadConfiguration, "The following required keys are missing: #{missing.join(', ')}"
-      end
-      if !@config["aws_region"] && !`ec2metadata 2>/dev/null`.empty?
-        aws_region = `ec2metadata --availability-zone`.chomp[0..-2]
-      end
-      Aws.config.update(region: aws_region)
 
       @master_user_password = @config["aws_master_user_password"]
       @aws_production_bucket = @config["aws_production_bucket"]
@@ -78,14 +71,46 @@ module AwsOneClickStaging
       @db_instance_id_production = @config["db_instance_id_production"]
       @db_instance_id_staging = @config["db_instance_id_staging"]
       @db_snapshot_id = @config["db_snapshot_id"]
+    end
 
+    def setup_aws_credentials config
+      cred_hash = {}
 
-      @c = Aws::RDS::Client.new
+      aws_region = config["aws_region"]
+
+      missing = CREDENTIAL_KEYS.select do |key|
+        !config[key]
+      end
+      if missing.none?
+        access_key_id = config["aws_access_key_id"]
+        secret_access_key = config["aws_secret_access_key"]
+        cred_hash.update(credentials: Aws::Credentials.new(access_key_id, secret_access_key))
+      end
+      if missing.any? && `ec2metadata 2>/dev/null`.empty?
+        raise BadConfiguration, "The following required keys are missing: #{missing.join(', ')}"
+      end
+      if !config["aws_region"] && !`ec2metadata 2>/dev/null`.empty?
+        aws_region = `ec2metadata --availability-zone`.chomp[0..-2]
+      end
+      cred_hash.update(region: aws_region)
+
+      if config['role_arn']
+        sts = Aws::STS::Client.new(credentials: Aws::RDS::Client.new(cred_hash).config.credentials)
+        cred_hash = {
+          credentials: Aws::AssumeRoleCredentials.new(
+            client: sts,
+            role_arn: config['role_arn'],
+            role_session_name: 'warrior-on-production'
+          )
+        }
+      end
+
+      cred_hash
     end
 
     def delete_snapshot_for_staging!
       puts "deleting old staging db snapshot"
-      response = @c.delete_db_snapshot(db_snapshot_identifier: @db_snapshot_id)
+      response = @c_production.delete_db_snapshot(db_snapshot_identifier: @db_snapshot_id)
 
       sleep 1 while response.db_snapshot.percent_progress != 100
       true
@@ -94,20 +119,28 @@ module AwsOneClickStaging
     end
 
     def create_new_snapshot_for_staging!
-      puts "creating new snapshot... this takes like 170 seconds..."
-      @c.create_db_snapshot({db_instance_identifier: @db_instance_id_production,
+      puts "creating new snapshot..."
+      @c_production.create_db_snapshot({db_instance_identifier: @db_instance_id_production,
         db_snapshot_identifier: @db_snapshot_id })
 
       sleep 10 while get_fresh_db_snapshot_state.status != "available"
+
+      if @config["production"]
+        @c_production.modify_db_snapshot_attribute(
+          db_snapshot_identifier: @db_snapshot_id,
+          attribute_name: 'restore',
+          values_to_add: [Aws::STS::Client.new(@staging_creds).get_caller_identity.account]
+        )
+      end
+
       true
     rescue
       false
     end
 
-
     def delete_staging_db_instance!
       puts "Deleting old staging instance... This one's a doozy =/"
-      @c.delete_db_instance(db_instance_identifier: @db_instance_id_staging,
+      @c_staging.delete_db_instance(db_instance_identifier: @db_instance_id_staging,
         skip_final_snapshot: true)
 
       sleep 10 until db_instance_is_deleted?(@db_instance_id_staging)
@@ -118,11 +151,16 @@ module AwsOneClickStaging
     def spawn_new_staging_db_instance!
       puts "Spawning a new fully clony RDS db instance for staging purposes"
 
-      @c.describe_db_snapshots(db_snapshot_identifier: @db_snapshot_id).db_snapshots.first
+      @c_production.describe_db_snapshots(db_snapshot_identifier: @db_snapshot_id).db_snapshots.first
 
-      response = @c.restore_db_instance_from_db_snapshot(
+      db_snapshot_id = if @config["production"]
+                         "arn:aws:rds:#{Aws.config[:region]}:#{@config["production"]["account_id"]}:snapshot:#{@db_snapshot_id}"
+                       else
+                         @db_snapshot_id
+                       end
+      response = @c_staging.restore_db_instance_from_db_snapshot(
         db_instance_identifier: @db_instance_id_staging,
-        db_snapshot_identifier: @db_snapshot_id,
+        db_snapshot_identifier: db_snapshot_id,
         db_instance_class: "db.t1.micro"
       )
 
@@ -130,7 +168,7 @@ module AwsOneClickStaging
       sleep 10 while get_fresh_db_instance_state(@db_instance_id_staging).db_instance_status != "available"
 
       # sets password for staging db and disables automatic backups
-      response = @c.modify_db_instance(
+      response = @c_staging.modify_db_instance(
         db_instance_identifier: @db_instance_id_staging,
         backup_retention_period: 0,
         master_user_password: @master_user_password
@@ -141,15 +179,15 @@ module AwsOneClickStaging
 
     # we use this methods cause amazon lawl-pain
     def get_fresh_db_snapshot_state
-      @c.describe_db_snapshots(db_snapshot_identifier: @db_snapshot_id).db_snapshots.first
+      @c_production.describe_db_snapshots(db_snapshot_identifier: @db_snapshot_id).db_snapshots.first
     end
 
     def get_fresh_db_instance_state(db_instance_id)
-      @c.describe_db_instances(db_instance_identifier: db_instance_id).db_instances.first
+      @c_staging.describe_db_instances(db_instance_identifier: db_instance_id).db_instances.first
     end
 
     def db_instance_is_deleted?(db_instance_id)
-      @c.describe_db_instances(db_instance_identifier: db_instance_id).db_instances.first
+      @c_staging.describe_db_instances(db_instance_identifier: db_instance_id).db_instances.first
       false
     rescue Aws::RDS::Errors::DBInstanceNotFound
       true

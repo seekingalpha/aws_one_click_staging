@@ -25,7 +25,12 @@ describe AwsOneClickStaging do
 
     before :each do
       config = AwsOneClickStaging::ConfigFile.load
+      # for testing without AWS accounts
       config.each_key {|key| config[key] = 'nonsense' if !config[key]}
+      ['staging', 'production'].each do |scope|
+        hash = config[scope].to_h
+        hash.each_key {|key| hash[key] = 'nonsense' if !hash[key]}
+      end
       @aws_warrior = AwsOneClickStaging::AwsWarrior.new(config: config)
     end
 

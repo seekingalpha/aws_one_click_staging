@@ -1,12 +1,23 @@
 # edit these values to match that of your production machine
 # which will be cloned from
 
-# The aws user you set here should only have read access to the production
-# S3 bucket and Db instance to keep your production data safe and happy
-aws_access_key_id:
-aws_secret_access_key:
+# The aws role/credentials you set here should only have read access to the
+# production S3 bucket and DB instance to keep your production data safe and happy
+# If both staging and production are in the same account,
+# there's no need for the staging/production split.
+# Like so:
+#  aws_region: 'us-west-1'
+#  aws_access_key_id: keyid
+#  aws_secret_access_key: accesskey
+staging: &staging
+  aws_region: 'us-west-1'
+  aws_access_key_id:
+  aws_secret_access_key:
+production:
+  <<: *staging
+  account_id:          # the account ID to use when constructing the full snapshot arn
+#  role_arn:            # role to assume to get into production
 
-aws_region: 'us-west-1'
 aws_master_user_password:
 aws_production_bucket: # this bucket is read from
 aws_staging_bucket:    # this bucket is DELETED and written to!
