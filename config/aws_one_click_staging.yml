@@ -18,10 +18,12 @@ production:
   account_id:          # the account ID to use when constructing the full snapshot arn
 #  role_arn:            # role to assume to get into production
 
-aws_master_user_password:
 aws_production_bucket: # this bucket is read from
 aws_staging_bucket:    # this bucket is DELETED and written to!
 
 db_instance_id_production: "actioncenter"           # this db_instance is read from
+aws_master_user_password:                           # this is the staging password
 db_instance_id_staging: "actioncenter-staging"      # this db_instance is DELETED and written to!
 db_snapshot_id: "actioncenter-snapshot-for-staging" # this db snapshot id is OVERWRITTEN
+db_staging_options:
+  db_instance_class: "db.t1.micro"

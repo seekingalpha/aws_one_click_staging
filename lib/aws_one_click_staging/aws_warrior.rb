@@ -151,11 +151,11 @@ module AwsOneClickStaging
                        else
                          @db_snapshot_id
                        end
-      response = @c_staging.restore_db_instance_from_db_snapshot(
+      options = @config['db_staging_options'].to_h.merge(
         db_instance_identifier: @db_instance_id_staging,
         db_snapshot_identifier: db_snapshot_id,
-        db_instance_class: "db.t1.micro"
       )
+      response = @c_staging.restore_db_instance_from_db_snapshot(options)
 
 
       sleep 10 while get_fresh_db_instance_state(@db_instance_id_staging).db_instance_status != "available"
