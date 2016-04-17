@@ -57,7 +57,6 @@ module AwsOneClickStaging
         @c_production = @c_staging
       end
 
-      @master_user_password = @config["aws_master_user_password"]
       @aws_production_bucket = @config["aws_production_bucket"]
       @aws_staging_bucket = @config["aws_staging_bucket"]
 
@@ -160,13 +159,14 @@ module AwsOneClickStaging
 
       sleep 10 while get_fresh_db_instance_state(@db_instance_id_staging).db_instance_status != "available"
 
-      # sets password for staging db and disables automatic backups
-      response = @c_staging.modify_db_instance(
-        db_instance_identifier: @db_instance_id_staging,
-        backup_retention_period: 0,
-        master_user_password: @master_user_password
-      )
-      sleep 2 while get_fresh_db_instance_state(@db_instance_id_staging).db_instance_status != "available"
+      if @config['db_staging_modifications']
+        modifications = @config['db_staging_modifications'].merge(
+          db_instance_identifier: @db_instance_id_staging,
+          apply_immediately: true # will happen during the next maintenance window otherwise
+        )
+        response = @c_staging.modify_db_instance(modifications)
+        sleep 2 while get_fresh_db_instance_state(@db_instance_id_staging).db_instance_status != "available"
+      end
     end
 
 

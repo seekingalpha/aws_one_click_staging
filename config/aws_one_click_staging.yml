@@ -22,8 +22,14 @@ aws_production_bucket: # this bucket is read from
 aws_staging_bucket:    # this bucket is DELETED and written to!
 
 db_instance_id_production: "actioncenter"           # this db_instance is read from
-aws_master_user_password:                           # this is the staging password
 db_instance_id_staging: "actioncenter-staging"      # this db_instance is DELETED and written to!
 db_snapshot_id: "actioncenter-snapshot-for-staging" # this db snapshot id is OVERWRITTEN
+
+# Will be added to RestoreDBInstanceFromDBSnapshot call
 db_staging_options:
   db_instance_class: "db.t1.micro"
+
+# Will be added to ModifyDBInstance call
+db_staging_modifications:
+  backup_retention_period: 0
+  master_user_password:
