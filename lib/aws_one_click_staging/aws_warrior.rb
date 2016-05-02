@@ -165,10 +165,14 @@ module AwsOneClickStaging
           apply_immediately: true # will happen during the next maintenance window otherwise
         )
         response = @c_staging.modify_db_instance(modifications)
-        sleep 2 while get_fresh_db_instance_state(@db_instance_id_staging).db_instance_status != "available"
+        sleep 2 until db_instance_ready?(@db_instance_id_staging)
       end
     end
 
+    def db_instance_ready?(db_instance_id)
+      instance_state = get_fresh_db_instance_state(db_instance_id)
+      instance_state.db_instance_status == "available" && instance_state.pending_modified_values.empty?
+    end
 
     # we use this methods cause amazon lawl-pain
     def get_fresh_db_snapshot_state
