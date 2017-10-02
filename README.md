@@ -2,7 +2,7 @@
 
 AwsOneClickStaging is a CLI app that will allow you to create a clone of amazon's S3 bucket (named app_name-staging) and the RDS database (named app_name-staging) so your staging server will be 100% up to date with your production server and allow you to perform some serious testing without the fear of losing important files stored on your S3 bucket.  
 
-If you didn't already know, S3 is a file storage solution offered by Amazon, and it's not user friendly so you pretty much need to write/ use a script like this in order to setup a staging server.  RDS is Amazon's database storage.  As with all amazon services, RDS databases are in the clown so you can rely on it working well with your app and working hard to provide your users with hilarious service.  
+If you didn't already know, S3 is a file storage solution offered by Amazon, and it's not user friendly so you pretty much need to write/ use a script like this in order to setup a staging server.  RDS is Amazon's database storage.  As with all amazon services, RDS databases are in the cloud so you can rely on it working well with your app and working hard to provide your users with hilarious service.  
 
 
 ## Installation
