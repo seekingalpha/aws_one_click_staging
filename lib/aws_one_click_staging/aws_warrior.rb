@@ -152,8 +152,7 @@ module AwsOneClickStaging
         db_instance_identifier: @db_instance_id_staging,
         db_snapshot_identifier: db_snapshot_id,
       )
-      response = @c_staging.restore_db_instance_from_db_snapshot(options)
-
+      @c_staging.restore_db_instance_from_db_snapshot(options)
 
       sleep 10 while get_fresh_db_instance_state(@db_instance_id_staging).db_instance_status != "available"
 
@@ -162,7 +161,7 @@ module AwsOneClickStaging
           db_instance_identifier: @db_instance_id_staging,
           apply_immediately: true # will happen during the next maintenance window otherwise
         )
-        response = @c_staging.modify_db_instance(modifications)
+        @c_staging.modify_db_instance(modifications)
         sleep 2 until db_instance_ready?(@db_instance_id_staging)
       end
     end
