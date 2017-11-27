@@ -162,7 +162,7 @@ module AwsOneClickStaging
           apply_immediately: true # will happen during the next maintenance window otherwise
         )
         @c_staging.modify_db_instance(modifications)
-        sleep 2 until db_instance_ready?(@db_instance_id_staging)
+        sleep 10 until db_instance_ready?(@db_instance_id_staging)
       end
     end
 
