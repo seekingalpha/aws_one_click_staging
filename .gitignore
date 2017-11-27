@@ -7,5 +7,6 @@
 /pkg/
 /spec/reports/
 /tmp/
+/vendor/bundle
 
 config/aws_actual_fffing_secrets.yml
