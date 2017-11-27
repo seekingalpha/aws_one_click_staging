@@ -131,10 +131,6 @@ module AwsOneClickStaging
           values_to_add: [Aws::STS::Client.new(@staging_creds).get_caller_identity.account]
         )
       end
-
-      true
-    rescue
-      false
     end
 
     def delete_staging_db_instance!
