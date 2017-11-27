@@ -19,9 +19,16 @@ module AwsOneClickStaging
     end
 
     def clone_rds
+      recreate_snapshot
+      recreate_staging_db_instance
+    end
+
+    def recreate_snapshot
       delete_snapshot_for_staging!
       create_new_snapshot_for_staging!
+    end
 
+    def recreate_staging_db_instance
       delete_staging_db_instance!
       spawn_new_staging_db_instance!
     end
