@@ -143,8 +143,6 @@ module AwsOneClickStaging
     def spawn_new_staging_db_instance!
       puts "Spawning a new fully clony RDS db instance for staging purposes"
 
-      @c_production.describe_db_snapshots(db_snapshot_identifier: @db_snapshot_id).db_snapshots.first
-
       db_snapshot_id = if @config["production"]
                          "arn:aws:rds:#{Aws.config[:region]}:#{@config["production"]["account_id"]}:snapshot:#{@db_snapshot_id}"
                        else
