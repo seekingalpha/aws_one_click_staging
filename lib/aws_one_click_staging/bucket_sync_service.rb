@@ -15,9 +15,11 @@ class BucketSyncService
   # from_settings and to_settings are both hashes with these keys:
   #  * :credentials (same as any AWS service)
   #  * :bucket
-  def initialize(from_settings, to_settings)
+  # prefix is a path filter for the FROM bucket
+  def initialize(from_settings, to_settings, prefix)
     @from_bucket = bucket_from_credentials(from_settings)
     @to_bucket   = bucket_from_credentials(to_settings)
+    @prefix      = prefix
   end
 
   def perform(output=STDOUT)
@@ -29,7 +31,7 @@ class BucketSyncService
     threads = []
 
     logger.info "Starting sync."
-    from_bucket.objects.each do |object|
+    from_bucket.objects(prefix: @prefix).each do |object|
       threads << Thread.new {
         if object_needs_syncing?(object)
           sync(object)

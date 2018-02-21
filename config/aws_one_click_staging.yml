@@ -20,6 +20,7 @@ production:
 
 aws_production_bucket: # this bucket is read from
 aws_staging_bucket:    # this bucket is DELETED and written to!
+bucket_prefix:         # limit the bucket content to copy to keys that begin with this
 
 db_instance_id_production: "actioncenter"           # this db_instance is read from
 db_instance_id_staging: "actioncenter-staging"      # this db_instance is DELETED and written to!
