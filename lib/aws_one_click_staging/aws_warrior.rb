@@ -34,16 +34,8 @@ module AwsOneClickStaging
     end
 
     def clone_s3_bucket
-      from_settings = {
-        credentials: @production_creds,
-        bucket: @aws_production_bucket
-      }
-      to_settings = {
-        credentials: @staging_creds,
-        bucket: @aws_staging_bucket
-      }
-
-      bs = BucketSyncService.new(from_settings, to_settings, @config['bucket_prefix'])
+      bs = BucketSyncService.new(@aws_production_bucket, @aws_staging_bucket,
+                                 @staging_creds, @config['bucket_prefix'])
       bs.debug = true
 
       puts "beginning clone of S3 bucket, this can go on for tens of minutes..."

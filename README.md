@@ -32,8 +32,6 @@ db_snapshot_id: "actioncenter-snapshot-for-staging" # this db snapshot id is OVE
 
 ## Usage
 
-Because amazon services are kind of a mess right now, it's best to run this from on an actual Amazon server you have shell access to (it downloads the bucket files and then re-uploads them, lol).
-
 ```
 aws_one_click_staging stage
 ```
@@ -112,8 +110,8 @@ That's commendable.  Use the below rules, replacing `PRODUCTIONDB` with the name
                 "s3:*"
             ],
             "Resource": [
-                "arn:aws:s3:::PRODUCTIONDB-staging",
-                "arn:aws:s3:::PRODUCTIONDB-staging/*"
+                "arn:aws:s3:::PRODUCTIONBUCKET-staging",
+                "arn:aws:s3:::PRODUCTIONBUCKET-staging/*"
             ]
         }
     ]
@@ -152,8 +150,8 @@ That's commendable.  Use the below rules, replacing `PRODUCTIONDB` with the name
                 "s3:ListMultipartUploadParts"
             ],
             "Resource": [
-                "arn:aws:s3:::PRODUCTIONDB",
-                "arn:aws:s3:::PRODUCTIONDB/*"
+                "arn:aws:s3:::PRODUCTIONBUCKET",
+                "arn:aws:s3:::PRODUCTIONBUCKET/*"
             ]
         }
     ]

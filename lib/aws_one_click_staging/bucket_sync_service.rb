@@ -12,18 +12,17 @@ class BucketSyncService
 
 
 
-  # from_settings and to_settings are both hashes with these keys:
-  #  * :credentials (same as any AWS service)
-  #  * :bucket
+  # credentials are the TO bucket's credentials, which have to
+  # have at least READ access on the FROM bucket
   # prefix is a path filter for the FROM bucket
-  def initialize(from_settings, to_settings, prefix)
-    @from_bucket = bucket_from_credentials(from_settings)
-    @to_bucket   = bucket_from_credentials(to_settings)
+  def initialize(from_bucket, to_bucket, credentials, prefix)
+    @from_bucket = bucket_from_credentials(from_bucket, credentials)
+    @to_bucket   = bucket_from_credentials(to_bucket, credentials)
     @prefix      = prefix
   end
 
   def perform(output=STDOUT)
-    AWS.eager_autoload! # this makes threads even more happy
+    Aws.eager_autoload! # this makes threads even more happy
 
     object_counts = {sync:0, skip:0}
     create_logger(output)
@@ -61,15 +60,16 @@ class BucketSyncService
 
   def sync(object)
     logger.debug "Syncing #{pp object}"
-    acl_setting = file_is_public?(object) ? :public_read : :private
-    object.copy_to(to_bucket.object(object.key), acl: acl_setting)
+    acl_setting = file_is_public?(object) ? 'public-read' : 'private'
+    to_object = to_bucket.object(object.key)
+    to_object.copy_from(object, acl: acl_setting)
   end
 
   # Crude, but ala aws I think :)
   def file_is_public?(object)
     grants = object.acl.grants
     grants.each do |g|
-      return true if g.permission.name == :read && g.grantee.uri == "http://acs.amazonaws.com/groups/global/AllUsers"
+      return true if g.permission == 'READ' && g.grantee.uri == "http://acs.amazonaws.com/groups/global/AllUsers"
     end
     return false
   end
@@ -88,12 +88,12 @@ class BucketSyncService
   end
 
 
-  def bucket_from_credentials(settings)
-    s3 = Aws::S3::Resource.new(settings[:credentials])
+  def bucket_from_credentials(bucket, credentials)
+    s3 = Aws::S3::Resource.new(credentials)
 
-    bucket = s3.bucket(settings[:bucket])
+    bucket = s3.bucket(bucket)
     if !bucket.exists?
-      bucket = s3.create_bucket(settings[:bucket])
+      bucket = s3.create_bucket(bucket)
     end
     bucket
   end
@@ -104,9 +104,8 @@ end
 
 =begin
 Example usage:
- from_settings = {credentials: {aws_access_key_id:"XXX", aws_secret_access_key:"YYY"}, bucket:"first-bucket"}
- to_settings = {credentials: {aws_access_key_id:"ZZZ", aws_secret_access_key:"AAA"}, bucket:"second-bucket"}
- syncer = BucketSyncService.new(from_settings, to_settings)
+ credentials = {aws_access_key_id:"XXX", aws_secret_access_key:"YYY"}
+ syncer = BucketSyncService.new("first-bucket", "second-bucket", credentials)
  syncer.debug = true # log each object
  syncer.perform
 =end
