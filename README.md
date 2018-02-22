@@ -110,8 +110,8 @@ That's commendable.  Use the below rules, replacing `PRODUCTIONDB` with the name
                 "s3:*"
             ],
             "Resource": [
-                "arn:aws:s3:::PRODUCTIONBUCKET-staging",
-                "arn:aws:s3:::PRODUCTIONBUCKET-staging/*"
+                "arn:aws:s3:::PRODUCTIONDB-staging",
+                "arn:aws:s3:::PRODUCTIONDB-staging/*"
             ]
         }
     ]
@@ -127,16 +127,35 @@ That's commendable.  Use the below rules, replacing `PRODUCTIONDB` with the name
             "Effect": "Allow",
             "Action": [
                 "s3:ListBucket",
-                "s3:ListObjects",
                 "s3:GetObject",
                 "s3:GetObjectAcl"
             ],
             "Resource": [
-                "arn:aws:s3:::PRODUCTIONBUCKET",
-                "arn:aws:s3:::PRODUCTIONBUCKET/*"
+                "arn:aws:s3:::PRODUCTIONDB",
+                "arn:aws:s3:::PRODUCTIONDB/*"
             ]
         }
     ]
+}
+```
+
+In case both buckets are on different accounts, the production bucket will require extra permissions in its "Bucket Policy". This should be added to existing policy's "Statement" array.
+```
+{
+    "Sid": "Stmt1519322910924",
+        "Effect": "Allow",
+        "Principal": {
+            "AWS": "arn:aws:iam::ACCOUNT_ID:USER_OR_role/SERVER_ROLE_NAME"
+        },
+        "Action": [
+            "s3:GetObject",
+            "s3:GetObjectAcl",
+            "s3:ListBucket"
+        ],
+        "Resource": [
+            "arn:aws:s3:::PRODUCTIONDB",
+            "arn:aws:s3:::PRODUCTIONDB/*"
+        ]
 }
 ```
 
