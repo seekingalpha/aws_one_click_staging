@@ -1,6 +1,6 @@
 # props to bantic
 # https://gist.github.com/bantic/4080793
-require 'aws-sdk'
+require 'aws-sdk-s3'
 require "thwait"
 
 class BucketSyncService
@@ -22,8 +22,6 @@ class BucketSyncService
   end
 
   def perform(output=STDOUT)
-    Aws.eager_autoload! # this makes threads even more happy
-
     object_counts = {sync:0, skip:0}
     create_logger(output)
 

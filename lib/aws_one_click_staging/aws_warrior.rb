@@ -1,5 +1,5 @@
 require "aws_one_click_staging/config_file"
-require 'aws-sdk'
+require 'aws-sdk-rds'
 
 module AwsOneClickStaging
 
@@ -167,7 +167,8 @@ module AwsOneClickStaging
 
     def db_instance_ready?(db_instance_id)
       instance_state = get_fresh_db_instance_state(db_instance_id)
-      instance_state.db_instance_status == "available" && instance_state.pending_modified_values.empty?
+      instance_state.db_instance_status == 'available' &&
+        instance_state.pending_modified_values.values.flatten(1).compact.empty?
     end
 
     # we use this methods cause amazon lawl-pain
