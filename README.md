@@ -11,6 +11,7 @@ Run this code (you need ruby) to install:
 
 ```ruby
 $  gem install aws_one_click_staging
+$  gem install nokogiri # or ox, oga, libxml, rexml
 ```
 
 Next you'll need to setup the config file:

@@ -12,6 +12,7 @@ Gem::Specification.new do |spec|
   spec.summary       = %q{ When setup with the proper credentials, this gem sets up a staging instance of all the crap you have on amazon. }
   spec.homepage      = "https://github.com/TheNotary/aws_one_click_staging"
   # spec.license       = "MIT" # uncomment this line if MIT is the best license for your situation
+  spec.required_ruby_version = '>= 3.0.0'
 
   spec.files         = `git ls-files -z`.split("\x0").reject { |f| f.match(%r{^(test|spec|features)/}) }
   spec.bindir        = "bin"
@@ -19,11 +20,13 @@ Gem::Specification.new do |spec|
   spec.require_paths = ["lib"]
 
   spec.add_dependency 'aws-sdk-rds', '~> 1.61.0'
-  spec.add_dependency 'aws-sdk-s3', '~> 1.0'
+  spec.add_dependency 'aws-sdk-s3', '~> 1.86.2'
   spec.add_dependency "thor"
+  spec.add_dependency "thwait"
 
-  spec.add_development_dependency "bundler", "~> 1.10"
-  spec.add_development_dependency "rake", "~> 10.0"
+  spec.add_development_dependency "bundler", "~> 2.0"
+  spec.add_development_dependency "rake", "~> 13.0"
   spec.add_development_dependency "rspec"
   spec.add_development_dependency "pry"
+  spec.add_development_dependency "nokogiri"
 end
