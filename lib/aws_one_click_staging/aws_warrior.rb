@@ -90,13 +90,14 @@ module AwsOneClickStaging
       cred_hash.update(region: aws_region)
 
       if config['role_arn']
-        sts = Aws::STS::Client.new(credentials: Aws::RDS::Client.new(cred_hash).config.credentials)
+        sts = Aws::STS::Client.new(credentials: Aws::RDS::Client.new(cred_hash).config.credentials, region: aws_region)
         cred_hash = {
           credentials: Aws::AssumeRoleCredentials.new(
             client: sts,
             role_arn: config['role_arn'],
             role_session_name: 'warrior-on-production'
-          )
+          ),
+          region: aws_region,
         }
       end
 
