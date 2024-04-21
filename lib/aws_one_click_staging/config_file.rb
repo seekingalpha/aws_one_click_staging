@@ -10,11 +10,11 @@ module AwsOneClickStaging
     def self.load(file=nil)
       file ||= default_file
       return nil if create_if_needed!(file)
-      YAML.load_file(file)
+      YAML.safe_load_file(file, aliases: true)
     end
 
     def self.create_if_needed!(file)
-      return false if File.exists?(file)
+      return false if File.exist?(file)
 
       puts "Config file not found, creating...\n\n"
       create!(file)
