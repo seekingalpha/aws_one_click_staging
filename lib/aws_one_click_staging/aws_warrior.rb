@@ -167,7 +167,7 @@ module AwsOneClickStaging
     end
 
     def delete_staging_db_instance!
-      puts "Deleting old staging instance... This one's a doozy =/"
+      puts "Deleting old staging instance..."
       @c_staging.delete_db_instance(db_instance_identifier: @db_instance_id_staging,
         skip_final_snapshot: true)
 
@@ -208,7 +208,6 @@ module AwsOneClickStaging
         instance_state.pending_modified_values.values.flatten(1).compact.empty?
     end
 
-    # we use this methods cause amazon lawl-pain
     def get_fresh_db_snapshot_state
       @c_production.describe_db_snapshots(db_snapshot_identifier: @db_snapshot_id).db_snapshots.first
     end
