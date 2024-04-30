@@ -20,20 +20,35 @@ module AwsOneClickStaging
       setup_aws_credentials_and_configs
     end
 
-    def clone_rds
-      recreate_snapshot
-      clone_encrypted_snapshot
+    # reuse_since: don't recreate snapshots if their newer than this
+    def clone_rds(reuse_since: nil)
+      new_snapshot = recreate_snapshot(reuse_since: reuse_since)
+      clone_encrypted_snapshot(reuse_since: new_snapshot ? nil : reuse_since)
       recreate_staging_db_instance
     end
 
-    def recreate_snapshot
+    def recreate_snapshot(reuse_since: nil)
+      if reuse_since
+        snapshot_state = get_fresh_db_snapshot_state rescue nil
+        if snapshot_state && snapshot_state.snapshot_create_time >= reuse_since
+          @encrypted_snapshot = snapshot_state.encrypted
+          return
+        end
+      end
+
       delete_snapshot_for_staging!
       create_new_snapshot_for_staging!
+      true
     end
 
-    def clone_encrypted_snapshot
+    def clone_encrypted_snapshot(reuse_since: nil)
       return unless @config['production'] && @encrypted_snapshot
       return unless @config['production'] && encrypted_snapshot
+
+      if reuse_since
+        snapshot_state = get_fresh_db_encrypted_snapshot_copy_state rescue nil
+        return if snapshot_state && snapshot_state.snapshot_create_time >= reuse_since
+      end
 
       delete_encrypted_copy!
       create_encrypted_snapshot_copy!
@@ -210,6 +225,10 @@ module AwsOneClickStaging
 
     def get_fresh_db_snapshot_state
       @c_production.describe_db_snapshots(db_snapshot_identifier: @db_snapshot_id).db_snapshots.first
+    end
+
+    def get_fresh_db_encrypted_snapshot_copy_state
+      @c_staging.describe_db_snapshots(db_snapshot_identifier: @db_snapshot_id).db_snapshots.first
     end
 
     def get_fresh_db_instance_state(db_instance_id)
