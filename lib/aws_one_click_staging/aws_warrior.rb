@@ -9,6 +9,8 @@ module AwsOneClickStaging
     class BadConfiguration < RuntimeError
     end
 
+    attr_accessor :encrypted_snapshot
+
     def initialize file: nil, config: nil
       if config
         @config = config
@@ -20,12 +22,23 @@ module AwsOneClickStaging
 
     def clone_rds
       recreate_snapshot
+      clone_encrypted_snapshot
       recreate_staging_db_instance
     end
 
     def recreate_snapshot
       delete_snapshot_for_staging!
       create_new_snapshot_for_staging!
+    end
+
+    def clone_encrypted_snapshot
+      return unless @config['production'] && @encrypted_snapshot
+      return unless @config['production'] && encrypted_snapshot
+
+      delete_encrypted_copy!
+      create_encrypted_snapshot_copy!
+      delete_snapshot_for_staging!
+      true
     end
 
     def recreate_staging_db_instance
@@ -105,8 +118,18 @@ module AwsOneClickStaging
     end
 
     def delete_snapshot_for_staging!
-      puts "deleting old staging db snapshot"
+      puts "deleting staging db snapshot"
       response = @c_production.delete_db_snapshot(db_snapshot_identifier: @db_snapshot_id)
+
+      sleep 1 while response.db_snapshot.percent_progress != 100
+      true
+    rescue
+      false
+    end
+
+    def delete_encrypted_copy!
+      puts "deleting old copy of encrypted staging db snapshot"
+      response = @c_staging.delete_db_snapshot(db_snapshot_identifier: @db_snapshot_id)
 
       sleep 1 while response.db_snapshot.percent_progress != 100
       true
@@ -116,8 +139,9 @@ module AwsOneClickStaging
 
     def create_new_snapshot_for_staging!
       puts "creating new snapshot..."
-      @c_production.create_db_snapshot({db_instance_identifier: @db_instance_id_production,
+      details = @c_production.create_db_snapshot({db_instance_identifier: @db_instance_id_production,
         db_snapshot_identifier: @db_snapshot_id })
+      @encrypted_snapshot = details.db_snapshot.encrypted
 
       sleep 10 while get_fresh_db_snapshot_state.status != "available"
 
@@ -128,6 +152,18 @@ module AwsOneClickStaging
           values_to_add: [Aws::STS::Client.new(@staging_creds).get_caller_identity.account]
         )
       end
+    end
+
+    def create_encrypted_snapshot_copy!
+      puts 'copying shared encrypted snapshot...'
+
+      @c_staging.copy_db_snapshot(
+        source_db_snapshot_identifier: "arn:aws:rds:#{Aws.config[:region]}:#{@config['production']['account_id']}:snapshot:#{@db_snapshot_id}",
+        target_db_snapshot_identifier: @db_snapshot_id,
+        kms_key_id: @config['kms_key_id'],
+      )
+
+      sleep 10 while get_fresh_db_encrypted_snapshot_copy_state.status != "available"
     end
 
     def delete_staging_db_instance!
@@ -143,7 +179,7 @@ module AwsOneClickStaging
     def spawn_new_staging_db_instance!
       puts "Spawning a new fully clony RDS db instance for staging purposes"
 
-      db_snapshot_id = if @config["production"]
+      db_snapshot_id = if @config["production"] && !encrypted_snapshot
                          "arn:aws:rds:#{Aws.config[:region]}:#{@config["production"]["account_id"]}:snapshot:#{@db_snapshot_id}"
                        else
                          @db_snapshot_id
