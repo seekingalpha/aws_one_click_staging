@@ -80,15 +80,18 @@ module AwsOneClickStaging
     private
 
     def setup_aws_credentials_and_configs
+      puts "setup_aws_credentials_and_configs"
       @staging_creds = setup_aws_credentials(@config['staging'] || @config)
       Aws.config.update @staging_creds
       @c_staging = Aws::RDS::Client.new
       if @config['production']
         @production_creds = setup_aws_credentials(@config['production'])
         @c_production = Aws::RDS::Client.new(@production_creds)
+        puts "setup_aws_credentials_and_configs production"
       else
         @production_creds = @staging_creds
         @c_production = @c_staging
+        puts "setup_aws_credentials_and_configs else production"
       end
 
       @aws_production_bucket = @config["aws_production_bucket"]
@@ -101,7 +104,7 @@ module AwsOneClickStaging
 
     def setup_aws_credentials config
       cred_hash = {}
-
+      puts config
       aws_region = config["aws_region"]
 
       missing = CREDENTIAL_KEYS.select do |key|
