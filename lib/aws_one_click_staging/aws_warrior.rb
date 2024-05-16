@@ -14,9 +14,12 @@ module AwsOneClickStaging
     def initialize file: nil, config: nil
       if config
         @config = config
+        puts "initialize @config = config"
       else
         @config = ConfigFile.load(file)
+        puts "initialize else @config = config"
       end
+      puts @config
       setup_aws_credentials_and_configs
     end
 
