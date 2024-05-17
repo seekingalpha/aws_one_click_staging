@@ -126,7 +126,7 @@ module AwsOneClickStaging
       end
       if missing.any? && `ec2metadata 2>/dev/null`.empty?
       puts "setup_aws_credentials missing.any?"
-        raise BadConfiguration, "The following required keys are missing: #{missing.join(', ')}"
+        #raise BadConfiguration, "The following required keys are missing: #{missing.join(', ')}"
       end
       if !config["aws_region"] && !`ec2metadata 2>/dev/null`.empty?
         aws_region = `ec2metadata --availability-zone`.chomp[0..-2]
