@@ -19,8 +19,8 @@ module AwsOneClickStaging
         @config = ConfigFile.load(file)
         puts "initialize else @config = config"
       end
-      puts @config
       puts "yep.."
+      puts @config
       setup_aws_credentials_and_configs
       puts @config
     end
