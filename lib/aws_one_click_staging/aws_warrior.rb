@@ -90,13 +90,13 @@ module AwsOneClickStaging
         @production_creds = setup_aws_credentials(@config['production'])
         @c_production = Aws::RDS::Client.new(@production_creds)
         puts "setup_aws_credentials_and_configs production"
-        puts "@staging_creds:"
+        puts "@production_creds:"
         puts @production_creds
       else
         @production_creds = @staging_creds
         @c_production = @c_staging
         puts "setup_aws_credentials_and_configs else production"
-        puts "@staging_creds:"
+        puts "@staging_creds and @staging_creds:"
         puts @production_creds
       end
 
