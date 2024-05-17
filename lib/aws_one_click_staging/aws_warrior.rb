@@ -21,6 +21,7 @@ module AwsOneClickStaging
       end
       puts @config
       setup_aws_credentials_and_configs
+      puts @config
     end
 
     ## reuse_since: don't recreate snapshots if their newer than this
