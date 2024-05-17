@@ -23,7 +23,7 @@ module AwsOneClickStaging
       setup_aws_credentials_and_configs
     end
 
-    # reuse_since: don't recreate snapshots if their newer than this
+    ## reuse_since: don't recreate snapshots if their newer than this
     def clone_rds(reuse_since: nil)
       new_snapshot = recreate_snapshot(reuse_since: reuse_since)
       clone_encrypted_snapshot(reuse_since: new_snapshot ? nil : reuse_since)
@@ -82,16 +82,19 @@ module AwsOneClickStaging
     def setup_aws_credentials_and_configs
       puts "setup_aws_credentials_and_configs"
       @staging_creds = setup_aws_credentials(@config['staging'] || @config)
+      puts @staging_creds
       Aws.config.update @staging_creds
       @c_staging = Aws::RDS::Client.new
       if @config['production']
         @production_creds = setup_aws_credentials(@config['production'])
         @c_production = Aws::RDS::Client.new(@production_creds)
         puts "setup_aws_credentials_and_configs production"
+        puts @production_creds
       else
         @production_creds = @staging_creds
         @c_production = @c_staging
         puts "setup_aws_credentials_and_configs else production"
+        puts @production_creds
       end
 
       @aws_production_bucket = @config["aws_production_bucket"]
