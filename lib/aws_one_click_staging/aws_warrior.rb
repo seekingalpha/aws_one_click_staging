@@ -20,7 +20,7 @@ module AwsOneClickStaging
         puts "initialize else @config = config"
       end
       puts "yep.."
-      puts @config
+      #puts @config
       setup_aws_credentials_and_configs
       puts @config
     end
