@@ -82,6 +82,7 @@ module AwsOneClickStaging
     def setup_aws_credentials_and_configs
       puts "setup_aws_credentials_and_configs"
       @staging_creds = setup_aws_credentials(@config['staging'] || @config)
+      puts "@staging_creds:"
       puts @staging_creds
       Aws.config.update @staging_creds
       @c_staging = Aws::RDS::Client.new
@@ -89,11 +90,13 @@ module AwsOneClickStaging
         @production_creds = setup_aws_credentials(@config['production'])
         @c_production = Aws::RDS::Client.new(@production_creds)
         puts "setup_aws_credentials_and_configs production"
+        puts "@staging_creds:"
         puts @production_creds
       else
         @production_creds = @staging_creds
         @c_production = @c_staging
         puts "setup_aws_credentials_and_configs else production"
+        puts "@staging_creds:"
         puts @production_creds
       end
 
@@ -107,6 +110,7 @@ module AwsOneClickStaging
 
     def setup_aws_credentials config
       puts "setup_aws_credentials"
+      puts "config:"
       puts config
       cred_hash = {}
       aws_region = config["aws_region"]
@@ -126,10 +130,12 @@ module AwsOneClickStaging
       end
       if !config["aws_region"] && !`ec2metadata 2>/dev/null`.empty?
         aws_region = `ec2metadata --availability-zone`.chomp[0..-2]
+        puts "setup_aws_credentials !config region && !ec2metadata"
       end
       cred_hash.update(region: aws_region)
 
       if config['role_arn']
+        puts "setup_aws_credentials role_arn"
         sts = Aws::STS::Client.new(credentials: Aws::RDS::Client.new(cred_hash).config.credentials, region: aws_region)
         cred_hash = {
           credentials: Aws::AssumeRoleCredentials.new(
@@ -140,7 +146,8 @@ module AwsOneClickStaging
           region: aws_region,
         }
       end
-
+      puts "setup_aws_credentials cred_hash:"
+      puts cred_hash
       cred_hash
     end
 
