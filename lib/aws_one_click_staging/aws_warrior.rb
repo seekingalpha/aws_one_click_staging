@@ -124,10 +124,10 @@ module AwsOneClickStaging
         secret_access_key = config["aws_secret_access_key"]
         cred_hash.update(credentials: Aws::Credentials.new(access_key_id, secret_access_key))
       end
-      if missing.any? && `ec2metadata 2>/dev/null`.empty?
-      puts "setup_aws_credentials missing.any?"
-        #raise BadConfiguration, "The following required keys are missing: #{missing.join(', ')}"
-      end
+      #if missing.any? && `ec2metadata 2>/dev/null`.empty?
+      #puts "setup_aws_credentials missing.any?"
+      #  raise BadConfiguration, "The following required keys are missing: #{missing.join(', ')}"
+      #end
       if !config["aws_region"] && !`ec2metadata 2>/dev/null`.empty?
         aws_region = `ec2metadata --availability-zone`.chomp[0..-2]
         puts "setup_aws_credentials !config region && !ec2metadata"
