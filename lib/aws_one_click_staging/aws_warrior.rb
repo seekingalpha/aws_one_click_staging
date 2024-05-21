@@ -32,10 +32,15 @@ module AwsOneClickStaging
     end
 
     def recreate_snapshot(reuse_since: nil)
+      puts "recreate_snapshot"
       if reuse_since
+        puts "recreate_snapshot reuse_since"
         snapshot_state = get_fresh_db_snapshot_state rescue nil
+        puts snapshot_state
         if snapshot_state && snapshot_state.snapshot_create_time >= reuse_since
+          puts "encrypted snapshot"
           @encrypted_snapshot = snapshot_state.encrypted
+          puts @encrypted_snapshot
           return
         end
       end
