@@ -207,6 +207,7 @@ module AwsOneClickStaging
 
     def create_encrypted_snapshot_copy!
       puts 'copying shared encrypted snapshot...'
+      puts @c_staging
 
       @c_staging.copy_db_snapshot(
         source_db_snapshot_identifier: "arn:aws:rds:#{Aws.config[:region]}:#{@config['production']['account_id']}:snapshot:#{@db_snapshot_id}",
