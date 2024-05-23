@@ -38,7 +38,7 @@ module AwsOneClickStaging
         snapshot_state = get_fresh_db_snapshot_state rescue nil
         puts snapshot_state
         if snapshot_state && snapshot_state.snapshot_create_time >= reuse_since
-          puts "encrypted snapshot"
+          puts "use existing encrypted snapshot"
           @encrypted_snapshot = snapshot_state.encrypted
           puts @encrypted_snapshot
           return
@@ -51,6 +51,7 @@ module AwsOneClickStaging
     end
 
     def clone_encrypted_snapshot(reuse_since: nil)
+      puts "clone_encrypted_snapshot"
       return unless @config['production'] && @encrypted_snapshot
       return unless @config['production'] && encrypted_snapshot
 
