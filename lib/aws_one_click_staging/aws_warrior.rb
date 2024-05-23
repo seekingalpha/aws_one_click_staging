@@ -212,6 +212,15 @@ module AwsOneClickStaging
       puts @db_snapshot_id
       puts @config['kms_key_id']
 
+      begin
+        identity = Aws::STS::Client.new().get_caller_identity
+      rescue => e
+        p "no credentials"
+      else
+        p "the credentials are:"
+        p identity
+      end
+
       @c_staging.copy_db_snapshot(
         source_db_snapshot_identifier: "arn:aws:rds:#{Aws.config[:region]}:#{@config['production']['account_id']}:snapshot:#{@db_snapshot_id}",
         target_db_snapshot_identifier: @db_snapshot_id,
