@@ -88,6 +88,8 @@ module AwsOneClickStaging
 
     def setup_aws_credentials_and_configs
       puts "setup_aws_credentials_and_configs"
+      puts "@staging_creds:"
+      puts @staging_creds
       @staging_creds = setup_aws_credentials(@config['staging'] || @config)
       puts "@staging_creds:"
       puts @staging_creds
