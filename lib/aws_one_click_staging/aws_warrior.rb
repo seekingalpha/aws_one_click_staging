@@ -88,14 +88,10 @@ module AwsOneClickStaging
 
     def setup_aws_credentials_and_configs
       puts "setup_aws_credentials_and_configs"
+      @staging_creds = setup_aws_credentials(@config['staging'] || @config)
       puts "@staging_creds:"
       puts @staging_creds
-      if @staging_creds.nil?
-        @staging_creds = setup_aws_credentials(@config['staging'] || @config)
-        puts "@staging_creds:"
-        puts @staging_creds
-        Aws.config.update @staging_creds
-      end
+      Aws.config.update @staging_creds
       @c_staging = Aws::RDS::Client.new
       if @config['production']
         @production_creds = setup_aws_credentials(@config['production'])
