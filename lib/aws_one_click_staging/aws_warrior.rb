@@ -288,10 +288,12 @@ module AwsOneClickStaging
     end
 
     def get_fresh_db_instance_state(db_instance_id)
+      puts "get_fresh_db_instance_state"
       @c_staging.describe_db_instances(db_instance_identifier: db_instance_id).db_instances.first
     end
 
     def db_instance_is_deleted?(db_instance_id)
+      puts "db_instance_is_deleted?"
       get_fresh_db_instance_state(db_instance_id)
       false
     rescue Aws::RDS::Errors::DBInstanceNotFound
