@@ -81,7 +81,7 @@ module AwsOneClickStaging
       bs.debug = true
 
       puts "beginning clone of S3 bucket, this can go on for tens of minutes..."
-#      bs.perform
+      bs.perform
     end
 
     def get_fancy_string_of_staging_db_uri
