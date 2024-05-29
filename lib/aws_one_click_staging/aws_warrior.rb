@@ -72,12 +72,16 @@ module AwsOneClickStaging
     end
 
     def clone_s3_bucket
+      puts "clone_s3_bucket"
+      puts "@aws_production_bucket is #{@aws_production_bucket}"
+      puts "@aws_staging_bucket is #{@aws_staging_bucket}"
+      puts "@staging_creds is #{@staging_creds}"
       bs = BucketSyncService.new(@aws_production_bucket, @aws_staging_bucket,
                                  @staging_creds, @config['bucket_prefix'])
       bs.debug = true
 
       puts "beginning clone of S3 bucket, this can go on for tens of minutes..."
-      bs.perform
+#      bs.perform
     end
 
     def get_fancy_string_of_staging_db_uri
