@@ -238,7 +238,7 @@ module AwsOneClickStaging
     end
 
     def delete_staging_db_instance!
-      puts "Deleting old staging instance..."
+      puts "Deleting old staging instance...#{@db_instance_id_staging}"
       @c_staging.delete_db_instance(db_instance_identifier: @db_instance_id_staging,
         skip_final_snapshot: true)
 
