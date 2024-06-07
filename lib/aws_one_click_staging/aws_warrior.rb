@@ -62,7 +62,7 @@ module AwsOneClickStaging
 
       delete_encrypted_copy!
       create_encrypted_snapshot_copy!
-#      delete_snapshot_for_staging!
+      delete_snapshot_for_staging!
       true
     end
 
