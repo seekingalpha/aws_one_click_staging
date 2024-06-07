@@ -14,17 +14,13 @@ module AwsOneClickStaging
     def initialize file: nil, config: nil
       if config
         @config = config
-        puts "initialize @config = config"
       else
         @config = ConfigFile.load(file)
-        puts "initialize else @config = config"
       end
-      puts "yo"
-      puts @config
       setup_aws_credentials_and_configs
     end
 
-    ## reuse_since: don't recreate snapshots if their newer than this
+    # reuse_since: don't recreate snapshots if their newer than this
     def clone_rds(reuse_since: nil)
       new_snapshot = recreate_snapshot(reuse_since: reuse_since)
       clone_encrypted_snapshot(reuse_since: new_snapshot ? nil : reuse_since)
@@ -32,15 +28,10 @@ module AwsOneClickStaging
     end
 
     def recreate_snapshot(reuse_since: nil)
-      puts "recreate_snapshot"
       if reuse_since
-        puts "recreate_snapshot reuse_since"
         snapshot_state = get_fresh_db_snapshot_state rescue nil
-        puts snapshot_state
         if snapshot_state && snapshot_state.snapshot_create_time >= reuse_since
-          puts "use existing encrypted snapshot"
           @encrypted_snapshot = snapshot_state.encrypted
-          puts @encrypted_snapshot
           return
         end
       end
@@ -51,7 +42,6 @@ module AwsOneClickStaging
     end
 
     def clone_encrypted_snapshot(reuse_since: nil)
-      puts "clone_encrypted_snapshot"
       return unless @config['production'] && @encrypted_snapshot
       return unless @config['production'] && encrypted_snapshot
 
@@ -72,10 +62,6 @@ module AwsOneClickStaging
     end
 
     def clone_s3_bucket
-      puts "clone_s3_bucket"
-      puts "@aws_production_bucket is #{@aws_production_bucket}"
-      puts "@aws_staging_bucket is #{@aws_staging_bucket}"
-      puts "@staging_creds is #{@staging_creds}"
       bs = BucketSyncService.new(@aws_production_bucket, @aws_staging_bucket,
                                  @staging_creds, @config['bucket_prefix'])
       bs.debug = true
@@ -91,20 +77,12 @@ module AwsOneClickStaging
     private
 
     def setup_aws_credentials_and_configs
-      puts "setup_aws_credentials_and_configs"
-      puts "@staging_creds:"
-      puts @staging_creds
       @staging_creds = setup_aws_credentials(@config['staging'] || @config)
-      puts "@staging_creds:"
-      puts @staging_creds
       Aws.config.update @staging_creds
       @c_staging = Aws::RDS::Client.new
       if @config['production']
         @production_creds = setup_aws_credentials(@config['production'])
         @c_production = Aws::RDS::Client.new(@production_creds)
-        puts "setup_aws_credentials_and_configs production"
-        puts "@production_creds:"
-        puts @production_creds
       else
         @production_creds = @staging_creds
         @c_production = @c_staging
@@ -122,9 +100,6 @@ module AwsOneClickStaging
     end
 
     def setup_aws_credentials config
-      puts "setup_aws_credentials"
-      puts "config:"
-      puts config
       cred_hash = {}
       aws_region = config["aws_region"]
 
@@ -149,12 +124,10 @@ module AwsOneClickStaging
         cred_hash.update(credentials: Aws::Credentials.new(access_key_id, secret_access_key))
       end
       if missing.any? && `ec2metadata 2>/dev/null`.empty? && identity.nil?
-        puts "setup_aws_credentials missing.any?"
         raise BadConfiguration, "The following required keys are missing: #{missing.join(', ')}"
       end
       if !config["aws_region"] && !`ec2metadata 2>/dev/null`.empty?
         aws_region = `ec2metadata --availability-zone`.chomp[0..-2]
-        puts "setup_aws_credentials !config region && !ec2metadata"
       end
       cred_hash.update(region: aws_region)
 
@@ -170,8 +143,6 @@ module AwsOneClickStaging
           region: aws_region,
         }
       end
-      puts "setup_aws_credentials cred_hash:"
-      puts cred_hash
       cred_hash
     end
 
@@ -214,19 +185,6 @@ module AwsOneClickStaging
 
     def create_encrypted_snapshot_copy!
       puts 'copying shared encrypted snapshot...'
-      puts @c_staging
-      puts "arn:aws:rds:#{Aws.config[:region]}:#{@config['production']['account_id']}:snapshot:#{@db_snapshot_id}"
-      puts @db_snapshot_id
-      puts @config['kms_key_id']
-
-      begin
-        identity = Aws::STS::Client.new().get_caller_identity
-      rescue => e
-        p "no credentials"
-      else
-        p "the credentials are:"
-        p identity
-      end
 
       @c_staging.copy_db_snapshot(
         source_db_snapshot_identifier: "arn:aws:rds:#{Aws.config[:region]}:#{@config['production']['account_id']}:snapshot:#{@db_snapshot_id}",
@@ -288,12 +246,10 @@ module AwsOneClickStaging
     end
 
     def get_fresh_db_instance_state(db_instance_id)
-      puts "get_fresh_db_instance_state"
       @c_staging.describe_db_instances(db_instance_identifier: db_instance_id).db_instances.first
     end
 
     def db_instance_is_deleted?(db_instance_id)
-      puts "db_instance_is_deleted?"
       get_fresh_db_instance_state(db_instance_id)
       false
     rescue Aws::RDS::Errors::DBInstanceNotFound
