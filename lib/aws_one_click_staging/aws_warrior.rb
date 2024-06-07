@@ -86,9 +86,6 @@ module AwsOneClickStaging
       else
         @production_creds = @staging_creds
         @c_production = @c_staging
-        puts "setup_aws_credentials_and_configs else production"
-        puts "@staging_creds and @staging_creds:"
-        puts @production_creds
       end
 
       @aws_production_bucket = @config["aws_production_bucket"]
@@ -101,6 +98,7 @@ module AwsOneClickStaging
 
     def setup_aws_credentials config
       cred_hash = {}
+
       aws_region = config["aws_region"]
 
       missing = CREDENTIAL_KEYS.select do |key|
@@ -118,7 +116,6 @@ module AwsOneClickStaging
       end
 
       if missing.none?
-        puts "setup_aws_credentials missing.none?"
         access_key_id = config["aws_access_key_id"]
         secret_access_key = config["aws_secret_access_key"]
         cred_hash.update(credentials: Aws::Credentials.new(access_key_id, secret_access_key))
@@ -132,7 +129,6 @@ module AwsOneClickStaging
       cred_hash.update(region: aws_region)
 
       if config['role_arn']
-        puts "setup_aws_credentials role_arn"
         sts = Aws::STS::Client.new(credentials: Aws::RDS::Client.new(cred_hash).config.credentials, region: aws_region)
         cred_hash = {
           credentials: Aws::AssumeRoleCredentials.new(
@@ -143,6 +139,7 @@ module AwsOneClickStaging
           region: aws_region,
         }
       end
+
       cred_hash
     end
 
