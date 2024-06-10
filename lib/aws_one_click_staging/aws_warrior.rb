@@ -108,11 +108,8 @@ module AwsOneClickStaging
       #check if there are some credentials on the machine
       begin
         identity = Aws::STS::Client.new().get_caller_identity
-      rescue => e
+      rescue StandardError => e
         p "no credentials"
-      else
-        p "the credentials are:"
-        p identity
       end
 
       if missing.none?
