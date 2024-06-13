@@ -104,12 +104,20 @@ module AwsOneClickStaging
       missing = CREDENTIAL_KEYS.select do |key|
         !config[key]
       end
+
+      #check if there are some credentials on the machine
+      begin
+        identity = Aws::STS::Client.new().get_caller_identity
+      rescue StandardError => e
+        p "no credentials"
+      end
+
       if missing.none?
         access_key_id = config["aws_access_key_id"]
         secret_access_key = config["aws_secret_access_key"]
         cred_hash.update(credentials: Aws::Credentials.new(access_key_id, secret_access_key))
       end
-      if missing.any? && `ec2metadata 2>/dev/null`.empty?
+      if missing.any? && `ec2metadata 2>/dev/null`.empty? && identity.nil?
         raise BadConfiguration, "The following required keys are missing: #{missing.join(', ')}"
       end
       if !config["aws_region"] && !`ec2metadata 2>/dev/null`.empty?
@@ -182,7 +190,7 @@ module AwsOneClickStaging
     end
 
     def delete_staging_db_instance!
-      puts "Deleting old staging instance..."
+      puts "Deleting old staging instance...#{@db_instance_id_staging}"
       @c_staging.delete_db_instance(db_instance_identifier: @db_instance_id_staging,
         skip_final_snapshot: true)
 
