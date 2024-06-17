@@ -21,6 +21,7 @@ Gem::Specification.new do |spec|
 
   spec.add_dependency 'aws-sdk-rds', '~> 1.61.0'
   spec.add_dependency 'aws-sdk-s3', '~> 1.86.2'
+  spec.add_dependency 'aws-sdk-core'
   spec.add_dependency "thor"
   spec.add_dependency "thwait"
 
