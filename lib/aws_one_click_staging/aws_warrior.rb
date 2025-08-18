@@ -41,7 +41,7 @@ module AwsOneClickStaging
       true
     end
 
-    def clone_encrypted_snapshot(reuse_since: nil)
+    def clone_encrypted_snapshot(reuse_since: nil, delete_source_after_copy: true)
       return unless @config['production'] && @encrypted_snapshot
       return unless @config['production'] && encrypted_snapshot
 
@@ -52,7 +52,7 @@ module AwsOneClickStaging
 
       delete_encrypted_copy!
       create_encrypted_snapshot_copy!
-      delete_snapshot_for_staging!
+      delete_snapshot_for_staging! if delete_source_after_copy  
       true
     end
 
