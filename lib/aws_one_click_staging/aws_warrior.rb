@@ -74,6 +74,26 @@ module AwsOneClickStaging
       get_fresh_db_instance_state(@db_instance_id_staging).endpoint.address
     end
 
+    def delete_snapshot_for_staging!
+      puts "deleting staging db snapshot"
+      response = @c_production.delete_db_snapshot(db_snapshot_identifier: @db_snapshot_id)
+
+      sleep 1 while response.db_snapshot.percent_progress != 100
+      true
+    rescue
+      false
+    end
+
+    def delete_encrypted_copy!
+      puts "deleting old copy of encrypted staging db snapshot"
+      response = @c_staging.delete_db_snapshot(db_snapshot_identifier: @db_snapshot_id)
+
+      sleep 1 while response.db_snapshot.percent_progress != 100
+      true
+    rescue
+      false
+    end
+
     private
 
     def setup_aws_credentials_and_configs
@@ -138,26 +158,6 @@ module AwsOneClickStaging
       end
 
       cred_hash
-    end
-
-    def delete_snapshot_for_staging!
-      puts "deleting staging db snapshot"
-      response = @c_production.delete_db_snapshot(db_snapshot_identifier: @db_snapshot_id)
-
-      sleep 1 while response.db_snapshot.percent_progress != 100
-      true
-    rescue
-      false
-    end
-
-    def delete_encrypted_copy!
-      puts "deleting old copy of encrypted staging db snapshot"
-      response = @c_staging.delete_db_snapshot(db_snapshot_identifier: @db_snapshot_id)
-
-      sleep 1 while response.db_snapshot.percent_progress != 100
-      true
-    rescue
-      false
     end
 
     def create_new_snapshot_for_staging!
